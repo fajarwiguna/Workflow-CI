@@ -1,0 +1,10 @@
+name: iris-workflow-ci
+
+entry_points:
+  main:
+    command: "python modelling.py"
+
+conda_env: conda.yaml
+
+docker_env:
+  image: mlflow/mlflow:v2.19.0
