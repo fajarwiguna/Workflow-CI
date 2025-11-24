@@ -22,11 +22,13 @@ jobs:
           python-version: 3.12
           auto-activate-base: false
 
-      - name: Install additional dependencies
+      - name: Install MLflow
         run: |
           pip install mlflow==2.19.0
 
-      - name: Run MLflow Project
+      - name: Run MLflow Project (bash -l fix)
+        shell: bash -l {0}
         run: |
           cd MLProject
+          conda activate mlflow-env
           mlflow run .
