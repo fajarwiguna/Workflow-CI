@@ -28,28 +28,32 @@ jobs:
           python modelling.py
 
       ##############################################################
-      # FIXED: Get experiment_id + run_id (tanpa error)
+      # FIXED: Get experiment_id + run_id with NEW MLflow API
       ##############################################################
       - name: Get latest MLflow Run ID
         id: get_run
         run: |
           cd MLProject
 
-          echo "🔍 Mencari experiment ID..."
-          EXP_ID=$(mlflow experiments list --output json | jq -r '.[] | select(.name=="Breast_Cancer_CI") | .experiment_id')
+          echo "🔍 Searching experiment ID..."
+
+          EXP_ID=$(mlflow experiments search --view all --output json \
+                    | jq -r '.[] | select(.name=="Breast_Cancer_CI") | .experiment_id')
 
           if [ -z "$EXP_ID" ]; then
-            echo "❌ Experiment tidak ditemukan!"
+            echo "❌ Experiment not found!"
             exit 1
           fi
 
           echo "✔ EXPERIMENT_ID = $EXP_ID"
 
-          echo "🔍 Mengambil RUN ID terbaru..."
-          RUN_ID=$(mlflow runs list --experiment-id "$EXP_ID" --output json | jq -r '.[0].run_id')
+          echo "🔍 Getting latest run ID..."
+
+          RUN_ID=$(mlflow runs search --experiment-id "$EXP_ID" --max-results 1 --output json \
+                    | jq -r '.[0].run_id')
 
           if [ -z "$RUN_ID" ]; then
-            echo "❌ Tidak ada run dalam experiment tersebut!"
+            echo "❌ No run found!"
             exit 1
           fi
 
@@ -57,7 +61,7 @@ jobs:
           echo "RUN_ID=$RUN_ID" >> $GITHUB_OUTPUT
 
       ##############################################################
-      # Build Docker image dari MLflow model
+      # Build Docker image from MLflow model
       ##############################################################
       - name: Build Docker Image
         run: |
@@ -67,10 +71,10 @@ jobs:
             -n "fajarwiguna/breast-cancer-ci:latest"
 
       ##############################################################
-      # Login & Push Docker Hub
+      # Push Docker Hub
       ##############################################################
       - name: Push Docker Image
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push fajarwiguna/breast-cancer-ci:latest
-          echo "🚀 Docker image berhasil dipush!"
+          echo "🚀 Docker image pushed!"
