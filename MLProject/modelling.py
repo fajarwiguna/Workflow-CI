@@ -9,7 +9,7 @@ df = pd.read_csv("breast_preprocessed_train.csv")
 X = df.drop("diagnosis", axis=1)
 y = df["diagnosis"]
 
-with mlflow.start_run(run_name="CI_AUTO_SUCCESS"):
+with mlflow.start_run(run_name="CI_AUTO_SUCCESS", nested=True):
     model = RandomForestClassifier(n_estimators=200, random_state=42)
     model.fit(X, y)
     
