@@ -24,6 +24,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
+      - name: Set MLflow Tracking Directory (FIX)
+        run: echo "MLFLOW_TRACKING_URI=file:./mlruns" >> $GITHUB_ENV
+
       - name: Training Model
         run: |
           cd MLProject
@@ -37,6 +40,11 @@ jobs:
             --experiment-name "Breast_Cancer_CI" \
             --max-results 1 \
             --output json | jq -r '.[0].info.run_id')
+
+          if [ -z "$RUN_ID" ]; then
+            echo "❌ RUN_ID kosong! Tidak ada MLflow run."
+            exit 1
+          fi
 
           echo "RUN_ID=$RUN_ID" >> $GITHUB_OUTPUT
           echo "Latest Run ID = $RUN_ID"
