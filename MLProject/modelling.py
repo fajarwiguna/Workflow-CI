@@ -3,9 +3,6 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from mlflow.models import infer_signature
 
-# Set experiment (tidak memulai run)
-mlflow.set_experiment("Breast_Cancer_CI")
-
 # Load data
 df = pd.read_csv("breast_preprocessed_train.csv")
 X = df.drop("diagnosis", axis=1)
@@ -15,7 +12,7 @@ y = df["diagnosis"]
 model = RandomForestClassifier(n_estimators=200, random_state=42)
 model.fit(X, y)
 
-# Log model tanpa start_run()
+# Log model (tidak pakai start_run, tidak pakai set_experiment)
 signature = infer_signature(X, model.predict(X))
 mlflow.sklearn.log_model(model, "model", signature=signature)
 
