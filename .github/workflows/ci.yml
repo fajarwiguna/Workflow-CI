@@ -1,4 +1,4 @@
-name: MLflow CI + Docker Push (100% JALAN)
+name: MLflow CI + Docker Push 
 
 on:
   workflow_dispatch:
@@ -9,39 +9,39 @@ jobs:
   train-and-docker:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install mlflow==2.19.0 scikit-learn pandas numpy
+      - name: Install deps
+        run: pip install mlflow==2.19.0 scikit-learn pandas numpy
 
-      - name: Run training langsung (tanpa MLproject & conda)
+      - name: Training
         run: |
           cd MLProject
           python modelling.py
 
-      - name: Build Docker image dari run terbaru
+      - name: Get Latest Run ID (FIXED!)
+        id: get_run
         run: |
           cd MLProject
-          # Ambil run ID terakhir dari experiment Breast_Cancer_CI
-          RUN_ID=$(mlflow runs list --experiment-name "Breast_Cancer_CI" --max-results 1 --query "data[0].info.run_id" --output json | tr -d '[]"')
-          echo "Run ID terakhir: $RUN_ID"
-          
-          # Build Docker image
+          RUN_ID=$(mlflow runs list --experiment-name "Breast_Cancer_CI" --max-results 1 --output json | jq -r '.[]?.info?.run_id' | head -n1)
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_OUTPUT
+          echo "Latest Run ID: $RUN_ID"
+
+      - name: Build Docker Image
+        run: |
+          cd MLProject
           mlflow models build-docker \
-            -m "runs:/$RUN_ID/artifacts/model" \
+            -m "runs:/${{ steps.get_run.outputs.RUN_ID }}/artifacts/model" \
             -n "fajarwiguna/breast-cancer-ci:latest"
 
-      - name: Login & Push ke Docker Hub
+      - name: Push to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           docker push fajarwiguna/breast-cancer-ci:latest
-          echo "SELESAI! Image berhasil di-push ke Docker Hub!"
-
+          echo "DOCKER IMAGE SUDAH DI-PUSH KE DOCKER HUB!"
