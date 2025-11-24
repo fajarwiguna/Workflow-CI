@@ -1,35 +1,32 @@
-name: CI - MLFlow
+name: BreastCancerCI
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  run-mlflow:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: '3.10'
+          activate-environment: mlflow-env
+          environment-file: MLProject/conda.yaml
+          python-version: 3.12
+          auto-activate-base: false
 
-      - name: Install MLflow deps
+      - name: Install additional dependencies
         run: |
-          pip install mlflow==2.19.0 scikit-learn pandas numpy
+          pip install mlflow==2.19.0
 
-      - name: Install Miniconda
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          auto-update-conda: true
-          python-version: "3.10"
-
-      - name: Enable conda for MLflow
+      - name: Run MLflow Project
         run: |
-          eval "$(conda shell.bash hook)"
-
-      - name: Run MLflow project
-        run: |
-          mlflow run MLProject
+          cd MLProject
+          mlflow run .
